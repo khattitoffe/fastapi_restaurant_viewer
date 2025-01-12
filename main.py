@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.token_router import router as token
 from app.routers.auth_router import router as auth
+from app.routers.restaurant_data_router import router as restaurant
 from app.services_oauth import login_oauth
 
 load_dotenv()
@@ -56,3 +57,4 @@ async def signup(data:signup):
 
 app.include_router(token,prefix="/token",tags=["Token"])#router for token 
 app.include_router(auth,prefix="/auth",tags=["Auth"])#router for auth
+app.include_router(restaurant,prefix="/restaurant",tags=["Restaurant"])#router for data
