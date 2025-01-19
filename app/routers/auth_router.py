@@ -1,11 +1,14 @@
 from fastapi import APIRouter,Request,HTTPException
-from app.services_oauth import oauth,userexists_google,create_user_google,create_access_token
+from app.services_oauth import userexists_google,create_user_google,create_access_token
+from app.sso import oauth
 from authlib.integrations.base_client import OAuthError
 from authlib.oauth2.rfc6749 import OAuth2Token
 from datetime import timedelta
 import logging 
 from app.models.google_models import google_user
 from app.models.oauth_models import Token
+from app.sso import facebook_sso,git_sso
+from fastapi_sso.sso.facebook import FacebookSSO
 
 router=APIRouter()
 
@@ -40,3 +43,29 @@ async def auth_google(request: Request):
         print("error")
         raise HTTPException(status_code=401, detail="Could not validate credentials")
     
+@router.get("/facebook")
+async def login_facebook():
+    async with facebook_sso:
+        return await facebook_sso.get_login_redirect(params={"prompt": "consent", "access_type": "offline"})
+
+@router.get("/callback/facebook")
+async def auth_callback(request: Request):
+    try: ## isme ahbi access token wala code dalna hai 
+        async with facebook_sso:
+            user = await facebook_sso.verify_and_process(request)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e))
+    
+
+
+@router.get("/github")
+async def auth_init():
+    async with git_sso:
+        return await git_sso.get_login_redirect()
+    
+@router.get("/callback/github")
+async def auth_callback(request: Request):
+    async with git_sso:
+        user = await git_sso.verify_and_process(request)
+        return user
