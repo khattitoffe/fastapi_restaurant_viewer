@@ -1,36 +1,12 @@
 from fastapi import HTTPException
 from datetime import timedelta, datetime, UTC
-from typing import Annotated
-from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer
-from authlib.integrations.starlette_client import OAuth
 import os
-from starlette.config import Config
 import app.database.config_user as DB
 from app.models.google_models import google_user
 from app.models.oauth_models import Token
 from app.models.login_models import login
 from jose import JWTError,jwt
 
-oauth_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
-
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID') or None
-GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET') or None
-
-if GOOGLE_CLIENT_ID is None or GOOGLE_CLIENT_SECRET is None:
-    raise Exception('Missing env variables')
-
-config_data = {'GOOGLE_CLIENT_ID': GOOGLE_CLIENT_ID, 'GOOGLE_CLIENT_SECRET': GOOGLE_CLIENT_SECRET}
-
-starlette_config = Config(environ=config_data)
-
-oauth = OAuth(starlette_config)
-
-oauth.register(
-    name='google',
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'},
-)
 
 
 def userexists_google(email:str)->bool:
