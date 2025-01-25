@@ -28,7 +28,7 @@ logging.basicConfig(
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-origins = ["http://127.0.0.1:8000/google"]
+origins = ["http://127.0.0.1:8000"]
 
 app=FastAPI()
 
@@ -42,6 +42,10 @@ app.add_middleware(
 
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
+@app.get("/")
+async def hello():
+    return{"message":"This is your API running"}
 
 @app.post("/login")
 async def login(data:login):
