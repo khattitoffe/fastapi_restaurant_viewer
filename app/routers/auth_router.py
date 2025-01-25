@@ -1,19 +1,19 @@
 from fastapi import APIRouter,Request,HTTPException
-from app.services_oauth import userexists_google,create_user_google,create_access_token
-from app.sso import oauth
-from authlib.integrations.base_client import OAuthError
-from authlib.oauth2.rfc6749 import OAuth2Token
+from app.services_oauth import userexists_sso,create_user_sso,create_access_token
+#from app.sso import oauth
+#from authlib.integrations.base_client import OAuthError
+#from authlib.oauth2.rfc6749 import OAuth2Token
 from datetime import timedelta
 import logging 
-from app.models.google_models import google_user
+#from app.models.google_models import google_user
+from app.models.sso_model import sso
 from app.models.oauth_models import Token
-from app.sso import facebook_sso,git_sso
-from fastapi_sso.sso.facebook import FacebookSSO
+from app.sso import facebook_sso,git_sso,google_sso
 
 router=APIRouter()
 
 GOOGLE_REDIRECT_URI = "http://127.0.0.1:8000/auth/callback/google"
-
+"""
 @router.get("/google")
 async def login_google(request: Request):
     return await oauth.google.authorize_redirect(request, GOOGLE_REDIRECT_URI)
@@ -42,7 +42,41 @@ async def auth_google(request: Request):
     except OAuthError:
         print("error")
         raise HTTPException(status_code=401, detail="Could not validate credentials")
-    
+    """
+
+@router.get("/google")
+async def auth_init():
+    async with google_sso:
+        return await google_sso.get_login_redirect(params={"prompt": "consent", "access_type": "offline"})
+
+
+@router.get("/callback/google")
+async def auth_callback(request: Request):
+    try:
+        async with google_sso:
+            user_info = await google_sso.verify_and_process(request)
+            print("good till here")
+            if(userexists_sso(user_info.email)):
+                user_data=sso(
+                              email=user_info.email,
+                              username=user_info.display_name
+                              )
+                token=create_access_token(user_data,timedelta(days=7))
+                return Token(access_token=token)
+            else:
+                user_data=sso(
+                              email=user_info.email,
+                              username=user_info.display_name
+                              )
+                create_user_sso(user_data)
+            
+                token=create_access_token(user_data,timedelta(days=7))
+                return Token(access_token=token)
+    except Exception as e:
+         print("error is here")
+         raise HTTPException(status_code=401,detail=str(e))
+
+
 @router.get("/facebook")
 async def login_facebook():
     async with facebook_sso:
@@ -52,12 +86,26 @@ async def login_facebook():
 async def auth_callback(request: Request):
     try: ## isme ahbi access token wala code dalna hai 
         async with facebook_sso:
-            user = await facebook_sso.verify_and_process(request)
-        return user
+            user_info = await facebook_sso.verify_and_process(request)
+            if(userexists_sso(user_info.email)):
+                user_data=sso(
+                              email=user_info.email,
+                              username=user_info.display_name
+                              )
+                token=create_access_token(user_data,timedelta(days=7))
+                return Token(access_token=token)
+            else:
+                user_data=sso(
+                              email=user_info.email,
+                              username=user_info.display_name
+                              )
+                create_user_sso(user_data)
+            
+                token=create_access_token(user_data,timedelta(days=7))
+                return Token(access_token=token)
     except Exception as e:
         raise HTTPException(status_code=401,detail=str(e))
     
-
 
 @router.get("/github")
 async def auth_init():
@@ -66,6 +114,24 @@ async def auth_init():
     
 @router.get("/callback/github")
 async def auth_callback(request: Request):
-    async with git_sso:
-        user = await git_sso.verify_and_process(request)
-        return user
+    try:
+        async with git_sso:
+            user_info = await git_sso.verify_and_process(request)
+            if(userexists_sso(user_info.email)):
+                user_data=sso(
+                              email=user_info.email,
+                              username=user_info.display_name
+                              )
+                token=create_access_token(user_data,timedelta(days=7))
+                return Token(access_token=token)
+            else:
+                user_data=sso(
+                              email=user_info.email,
+                              username=user_info.display_name
+                              )
+                create_user_sso(user_data)
+            
+                token=create_access_token(user_data,timedelta(days=7))
+                return Token(access_token=token)
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e))
