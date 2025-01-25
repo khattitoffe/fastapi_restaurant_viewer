@@ -1,10 +1,11 @@
 import os
-from fastapi import FastAPI, Request
+#from fastapi import FastAPI, Request
 from fastapi_sso.sso.facebook import FacebookSSO
 from fastapi_sso.sso.github import GithubSSO
-from fastapi.security import OAuth2PasswordBearer
-from authlib.integrations.starlette_client import OAuth
-from starlette.config import Config
+from fastapi_sso.sso.google import GoogleSSO
+#from fastapi.security import OAuth2PasswordBearer
+#from authlib.integrations.starlette_client import OAuth
+#from starlette.config import Config
 
 
 ## facebook ka sso ##
@@ -17,7 +18,7 @@ facebook_sso = FacebookSSO(
     redirect_uri="http://localhost:8000/auth/callback/facebook",
     allow_insecure_http=True,
 )
-
+"""
 ## GOOGLE ka oauth##
 oauth_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -37,6 +38,19 @@ oauth.register(
     name='google',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'},
+)
+"""
+
+##google ka sso
+
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID') or None
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET') or None
+
+google_sso = GoogleSSO(
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    redirect_uri="http://127.0.0.1:8000/auth/callback/google",
+    allow_insecure_http=True,
 )
 
 ## github ka sso

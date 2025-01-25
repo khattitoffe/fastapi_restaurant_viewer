@@ -4,31 +4,30 @@ import os
 import app.database.config_user as DB
 from app.models.google_models import google_user
 from app.models.oauth_models import Token
+from app.models.sso_model import sso
 from app.models.login_models import login
 from jose import JWTError,jwt
 
 
 
-def userexists_google(email:str)->bool:
+def userexists_sso(email:str)->bool:
    if DB.collection.count_documents({"email":email})==0:#count_document returns the number of matches in db if 0 that means no user exitst
       return False
    return True
 
 
-def create_user_google(data:google_user):#gets data from api endpoints 
+def create_user_sso(data:sso):#gets data from api endpoints 
    put_data_inDB(data)#call the below funciton
    
-def put_data_inDB(data:google_user):#puts the data in the database
+def put_data_inDB(data:sso):#puts the data in the database
    try:
       DB.collection.insert_one(data.model_dump())#getting a type error when inserting .. so converting to dict by model_dump function(dicT() funtion was deprecated by pydantic)
    except Exception as e:
       raise HTTPException(status_code=500,detail=str(e))
-   
-
 
    #-------ACCESS TOKEN FUNC----------#
 
-def create_access_token(data:google_user,expire_time:timedelta):
+def create_access_token(data:sso,expire_time:timedelta):
    expire_time=datetime.now(UTC)+expire_time
    encode={
       "email":data.email,
@@ -42,7 +41,7 @@ def create_access_token(data:google_user,expire_time:timedelta):
       raise HTTPException(status_code=400,detail=str(e))
 
 
-def refresh_access_token(data:google_user,expire_time:timedelta):
+def refresh_access_token(data:sso,expire_time:timedelta):
    return create_access_token(data,expire_time)
 
 def decode_access_token(token:str):
